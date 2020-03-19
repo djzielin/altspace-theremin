@@ -4,7 +4,7 @@
   "private": true,
   "description": "",
   "main": "built/server.js",
-  "author": "Microsoft Corporation",
+  "author": "David J. Zielinski",
   "license": "MIT",
   "keywords": [
     "mixed reality",
@@ -32,10 +32,10 @@
     "@typescript-eslint/parser": "^2.17.0",
     "eslint": "^6.8.0",
     "eslint-plugin-header": "^3.0.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@microsoft/mixed-reality-extension-sdk": "^0.15.0",
+    "@microsoft/mixed-reality-extension-sdk": "0.15.0",
     "@types/dotenv": "^6.1.0",
     "@types/node": "^10.3.1",
     "dotenv": "^6.2.0"

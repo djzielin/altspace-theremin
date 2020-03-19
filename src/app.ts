@@ -15,7 +15,8 @@ import {
 	//TextAnchorLocation,
 	User,
 	Vector3,
-	Sound
+	Sound,
+	Guid
 } from '@microsoft/mixed-reality-extension-sdk';
 //import { userInfo } from 'os';
 
@@ -88,10 +89,10 @@ export default class HelloWorld {
 
 		log.info("app", "userid: " + user.id);
 
-		if (user.id !== "55e777e3-a124-5c61-2d20-b37898687186") {
-			log.info("app", "user that joined was not Dave!");
-			return;
-		}
+		//if (user.id !== "55e777e3-a124-5c61-2d20-b37898687186") {
+		//	log.info("app", "user that joined was not Dave!");
+		//	return;
+		//}
 
 		this.userID = user.id;
 

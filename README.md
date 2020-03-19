@@ -1,5 +1,4 @@
-Based off the hello world example in
-https://github.com/microsoft/mixed-reality-extension-sdk
+Shows a text that animates when highlighting or clicking on a cube.
 
 ## Editing
 
