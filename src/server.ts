@@ -18,7 +18,9 @@ dotenv.config();
 
 // Start listening for connections, and serve static files
 const server = new WebHost({
-	// baseUrl: 'http://<ngrok-id>.ngrok.io',
+	//baseUrl: 'http://altspace-theremin.azurewebsites.net',
+	//baseUrl: 'http://altspace-theremin.ngrok.io',
+	port: process.env.PORT,
 	baseDir: resolvePath(__dirname, '../public')
 });
 

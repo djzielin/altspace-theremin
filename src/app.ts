@@ -45,6 +45,7 @@ export default class HelloWorld {
 	private counter = 0;
 
 	constructor(private context: Context, private baseUrl: string) {
+		log.info("app","our constructor started");
 		this.assets = new AssetContainer(context);
 
 		this.context.onStarted(() => this.started());
@@ -151,6 +152,8 @@ export default class HelloWorld {
 	}
 
 	private started() {
+		log.info("app","our started callback has begun");
+		
 		for (let i=1; i < 51; i++) {
 			const filename = `${this.baseUrl}/saw_` + i.toString() + ".wav";
 			log.info("app", "trying to load filename: " + filename);

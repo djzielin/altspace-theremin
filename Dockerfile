@@ -1,14 +1,23 @@
-FROM node:10.16-alpine
-WORKDIR /opt/mre
+FROM node:8.12.0-alpine
+
+WORKDIR /opt/app
+
+ENV PORT=80
+ENV BASE_URL=http://altspace-theremin.fr.openode.io
+
+# daemon for cron jobs
+RUN echo 'crond' > /boot.sh
+# RUN echo 'crontab .openode.cron' >> /boot.sh
+
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
 
 COPY package*.json ./
-RUN ["npm", "install", "--unsafe-perm"]
 
-COPY tsconfig.json ./
-COPY src ./src/
-RUN ["npm", "run", "build-only"]
+RUN npm --add-python-to-path='true' install --production
 
-COPY public ./public/
+# Bundle app source
+COPY . .
 
-EXPOSE 3901/tcp
-CMD ["npm", "start"]
+CMD sh /boot.sh && npm start
