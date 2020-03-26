@@ -62,7 +62,7 @@ export default class HelloWorld {
 
 	private playSound(label: string, handPos: Vector3, soundActor: Actor) {
 		const ourDist = this.computeFlatDistance(handPos);
-		const height=handPos.y;
+		const height = handPos.y;
 
 		log.info("app", label + " dist: " + ourDist);
 		log.info("app", "     height: " + height);
@@ -74,11 +74,13 @@ export default class HelloWorld {
 		if (height > 1.0 && height < 2.0) {
 			indexID = Math.trunc((height - 1.0) * 20.0);
 		}
-		if (height >= 2.0){
+		if (height >= 2.0) {
 			indexID = 20;
 		}
 
+		//TODO: this should return a valid media instance, maybe stop old one? before launching new one?
 		if (ourDist < 1.0) {
+			log.info("app", "     launching sound index: " + indexID + " with pitch: " + ourPitch);
 			soundActor.startSound(this.ourSounds[indexID].id, {
 				doppler: 0,
 				pitch: ourPitch
@@ -163,8 +165,11 @@ export default class HelloWorld {
 				uri: filename
 			});
 
-			this.ourSounds.push(newSound);
-			log.info("app", "   done!");
+			if(newSound)
+			{
+				this.ourSounds.push(newSound);
+				log.info("app", "   done loading sound!");
+			}
 		}
 
 		this.ourRightSound = Actor.Create(this.context);

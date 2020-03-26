@@ -20,6 +20,7 @@ dotenv.config();
 const server = new WebHost({
 	//baseUrl: 'http://altspace-theremin.azurewebsites.net',
 	//baseUrl: 'http://altspace-theremin.ngrok.io',
+	baseUrl: 'http://45.55.43.77',
 	port: process.env.PORT,
 	baseDir: resolvePath(__dirname, '../public')
 });
