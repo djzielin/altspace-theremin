@@ -11,81 +11,102 @@ import {
 	AssetContainer,
 	//ButtonBehavior,
 	Context,
+	MediaInstance,
 	//Quaternion,
 	//TextAnchorLocation,
 	User,
 	Vector3,
 	Sound
 } from '@microsoft/mixed-reality-extension-sdk';
-//import { userInfo } from 'os';
 
-//import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 import { log } from '@microsoft/mixed-reality-extension-sdk/built/log';
-//import { appendFile } from 'fs';
 
-/**
- * The main class of this app. All the logic goes here.
- */
-export default class HelloWorld {
-	private assets: AssetContainer;
-	private allLeftHands = new Map();
-	private allRightHands = new Map();
+class SoundHand {
+	private soundActor: Actor;
+	private handName: string;
+	private playingSounds: MediaInstance[] = [];
 
-	private ourRightHand: Actor = null;
-	private ourLeftHand: Actor = null;
-	private ourRightSound: Actor = null;
-	private ourLeftSound: Actor = null;
-
-	private ourSounds: Sound[]= [];
-	
-	private currentRightPitch = 0.0;
-	private currentLeftPitch = 0.0;
-
-	private userID: string;
-	private counter = 0;
-
-	constructor(private context: Context, private baseUrl: string) {
-		log.info("app","our constructor started");
-		this.assets = new AssetContainer(context);
-
-		this.context.onStarted(() => this.started());
-		this.context.onUserLeft(user => this.userLeft(user));
-		this.context.onUserJoined(user => this.userJoined(user));
+	constructor(name: string, private context: Context) {
+		this.soundActor = Actor.Create(context);
+		this.handName=name;
 	}
 
-	private computeFlatDistance(ourVec: Vector3) {
+	public computeFlatDistance(ourVec: Vector3) {
 		const tempPos = ourVec.clone();
 		tempPos.y = 0; //ignore height off the ground
 		return tempPos.length();
 	}
 
+	public playSound(theSound: Sound) {
+		const soundInstance: MediaInstance = this.soundActor.startSound(theSound.id, {
+			doppler: 0,
+			pitch: 0.0,
+			looping: true,
+			volume: 0.0
+		});
 
-	private playSound(label: string, handPos: Vector3, soundActor: Actor) {
-		const ourDist = this.computeFlatDistance(handPos);
-		const height = handPos.y;
+		this.playingSounds.push(soundInstance); //store for potential later use
+	}
 
-		log.info("app", label + " dist: " + ourDist);
-		log.info("app", "     height: " + height);
-		const ourPitch = ourDist * -30.0;
+	private clampVal(incoming: number): number {
+		if (incoming < 0.0) {
+			return 0.0;
+		}
+		if (incoming > 1.0) {
+			return 1.0;
+		}
+		return incoming;
+	}
+
+	public updateSound(handPos: Vector3) {
+		const ourDist = this.clampVal(this.computeFlatDistance(handPos));
+
+		//if theremin is 1m tall, it ranges from -0.5 to 0.5. raise to range 0 to 1
+		const ourHeight = this.clampVal(handPos.y + 0.5); 
+
+		const ourPitch = (ourDist) * -30.0;
+		const ourVol = ourHeight;
+
+		/*log.info("app", this.handName);
+		log.info("app", "     dist: " + ourDist);
+		log.info("app", "     height: " + ourHeight);
 		log.info("app", "     pitch: " + ourPitch);
+		log.info("app", "     vol: " + ourVol);*/
 
-		let indexID = 0;
-
-		if (height > 1.0 && height < 2.0) {
-			indexID = Math.trunc((height - 1.0) * 20.0);
-		}
-		if (height >= 2.0) {
-			indexID = 20;
-		}
-
-		//TODO: this should return a valid media instance, maybe stop old one? before launching new one?
-		if (ourDist < 1.0) {
-			log.info("app", "     launching sound index: " + indexID + " with pitch: " + ourPitch);
-			soundActor.startSound(this.ourSounds[indexID].id, {
-				doppler: 0,
-				pitch: ourPitch
+		this.playingSounds[1].setState(
+			{
+				pitch: ourPitch,
+				volume: ourVol
 			});
-		}
+	}
+}
+/**
+ * The main class of this app. All the logic goes here.
+ */
+export default class HelloWorld {
+	private assets: AssetContainer;
+
+	private rightSoundHand: SoundHand = null;
+	private leftSoundHand: SoundHand = null;
+
+	private allLeftHands = new Map();
+	private ourLeftHand: Actor = null;
+
+	private allRightHands = new Map();
+	private ourRightHand: Actor = null;
+
+	private ourSounds: Sound[] = [];
+
+	private userID: string;
+	private counter = 0;
+
+	constructor(private context: Context, private baseUrl: string) {
+		log.info("app", "our constructor started");
+		this.assets = new AssetContainer(context);
+
+		this.context.onStarted(() => this.started());
+		this.context.onUserLeft(user => this.userLeft(user));
+		this.context.onUserJoined(user => this.userJoined(user));
 	}
 
 	private userJoined(user: User) {
@@ -144,7 +165,7 @@ export default class HelloWorld {
 		let closestActor: Actor = null;
 
 		for (let hand of handMap.values()) {
-			const hDist = this.computeFlatDistance(hand.transform.app.position);
+			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position);
 			if (hDist < closestDist) {
 				closestDist = hDist;
 				closestActor = hand;
@@ -153,29 +174,32 @@ export default class HelloWorld {
 		return closestActor;
 	}
 
-	private started() {
-		log.info("app","our started callback has begun");
-		
-		for (let i=1; i < 51; i++) {
-			const filename = `${this.baseUrl}/saw_` + i.toString() + ".wav";
-			log.info("app", "trying to load filename: " + filename);
-
-
-			const newSound = this.assets.createSound("dave sound" + i.toString(), {
-				uri: filename
-			});
-
-			if(newSound)
-			{
-				this.ourSounds.push(newSound);
-				log.info("app", "   done loading sound!");
-			}
+	private loadSound(filename: string) {
+		log.info("app", "trying to load filename: " + filename);
+		const newSound = this.assets.createSound("dave long sound", {
+			uri: filename
+		});
+		if (newSound) {
+			log.info("app", "   succesfully loaded sound!");
 		}
+		this.ourSounds.push(newSound);
+	}
 
-		this.ourRightSound = Actor.Create(this.context);
-		this.ourLeftSound = Actor.Create(this.context);
+	private started() {
+		log.info("app", "our started callback has begun");
 
-		const circle = this.assets.createCylinderMesh('circle', 6.0, 0.1, 'y', 16);
+		this.loadSound(`${this.baseUrl}/long_sine.mp3`);
+		this.loadSound(`${this.baseUrl}/long_saw.mp3`);
+
+		this.rightSoundHand = new SoundHand("right", this.context);
+		this.rightSoundHand.playSound(this.ourSounds[0]);
+		this.rightSoundHand.playSound(this.ourSounds[1]);
+
+		this.leftSoundHand = new SoundHand("left", this.context);
+		this.leftSoundHand.playSound(this.ourSounds[0]);
+		this.leftSoundHand.playSound(this.ourSounds[1]);
+
+		const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
 		const ourPole = Actor.Create(this.context, {
 			actor: {
 				name: 'the pole',
@@ -183,20 +207,19 @@ export default class HelloWorld {
 			}
 		});
 
-		//generate new audio. activate small snippets. kind of a granular synthesis. 
 		setInterval(() => {
 			if (this.ourRightHand) {
-				this.playSound("right", this.ourRightHand.transform.app.position, this.ourRightSound);
+				this.rightSoundHand.updateSound(this.ourRightHand.transform.app.position);
 			}
 			if (this.ourLeftHand) {
-				this.playSound("left ", this.ourLeftHand.transform.app.position, this.ourLeftSound);
+				this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
 			}
-		}, 50); //fire every 50ms
+		}, 30); //fire every 50ms
 
 		//keep checking who has the closest hand to theremin. put that hand in charge
-		setInterval(() => {			
-			this.ourLeftHand=this.findClosestHand(this.allLeftHands);
-			this.ourRightHand=this.findClosestHand(this.allRightHands);
+		setInterval(() => {
+			this.ourLeftHand = this.findClosestHand(this.allLeftHands);
+			this.ourRightHand = this.findClosestHand(this.allRightHands);
 		}, 1000); //fire every 1 sec
 	}
 }

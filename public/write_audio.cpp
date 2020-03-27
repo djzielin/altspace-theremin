@@ -83,9 +83,20 @@ bool generate_harmonic(int harmonic)
    if (newFreq > halfFreq)
       return false;
 
+   
    for (int i = 0; i < sample_count; i++)
    {
-      buffer[i]+= (sin(phase) / (double)harmonic)*0.5;
+      double ramp_val=1.0;
+      double ratio=(double)i/(double)sample_count;
+      if(ratio<0.25)
+      {
+         ramp_val=ratio/0.25; //0 to 1
+      }
+      if(ratio>0.75)
+      {
+         ramp_val=(1.0-ratio)/0.25;
+      }
+      buffer[i]+= ((sin(phase) / (double)harmonic)*0.5)*ramp_val;
       phase += inc;
 
       while(phase>two_pi)
@@ -97,6 +108,7 @@ bool generate_harmonic(int harmonic)
 int main(void)
 {
    printf("starting up write_audio!\n");
+   sample_count = ((int)((float)sample_rate * 0.200f));
 
    memset(&sfinfo, 0, sizeof(sfinfo));
 
@@ -104,9 +116,6 @@ int main(void)
    sfinfo.frames = sample_count;
    sfinfo.channels = 1;
    sfinfo.format = (SF_FORMAT_WAV | SF_FORMAT_PCM_16);
-
-
-   sample_count = ((int)((float)sample_rate * 0.1f));
 
    buffer = new float[sfinfo.channels * sample_count];
    if (buffer == nullptr)
