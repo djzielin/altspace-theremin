@@ -5,30 +5,60 @@
 
 import {
 	Actor,
-	//AnimationEaseCurves,
-	//AnimationKeyframe,
-	//AnimationWrapMode,
+	AnimationEaseCurves,
+	AnimationKeyframe,
+	AnimationWrapMode,
 	AssetContainer,
 	//ButtonBehavior,
 	Context,
 	MediaInstance,
+	Mesh,
+	Material,
 	//Quaternion,
 	//TextAnchorLocation,
 	User,
 	Vector3,
-	Sound
+	Sound,
+	Color4
 } from '@microsoft/mixed-reality-extension-sdk';
+
+import colorsys from 'colorsys';
 
 import { log } from '@microsoft/mixed-reality-extension-sdk/built/log';
 
 class SoundHand {
 	private soundActor: Actor;
-	private handName: string;
 	private playingSounds: MediaInstance[] = [];
+	private boxMesh: Mesh;
+	private visCubes: Actor[] = [];
+	private frameCounter=0;
+	private currentCube: Actor=null;
+	private cubeTarget: Vector3;
 
-	constructor(name: string, private context: Context) {
+
+	constructor(private handName: string, private context: Context, private assets: AssetContainer) {
 		this.soundActor = Actor.Create(context);
-		this.handName=name;
+		this.boxMesh = this.assets.createBoxMesh('box', .02, 0.02, 0.02);
+
+		for(let i=0;i<30;i++)
+		{
+			const ourMat: Material = this.assets.createMaterial('cube mat',{
+				color: new Color4(1.0,1.0,1.0,1.0)
+			});
+
+			const ourBox = Actor.Create(this.context, {
+				actor: {
+					name: 'the box',
+					appearance: 
+					{ 
+						meshId: this.boxMesh.id,
+						materialId: ourMat.id
+					},
+				}
+			});
+
+			this.visCubes.push(ourBox);
+		}
 	}
 
 	public computeFlatDistance(ourVec: Vector3) {
@@ -48,38 +78,88 @@ class SoundHand {
 		this.playingSounds.push(soundInstance); //store for potential later use
 	}
 
-	private clampVal(incoming: number): number {
-		if (incoming < 0.0) {
-			return 0.0;
+	private clampVal(incoming: number, min: number, max: number): number {
+		if (incoming < min) {
+			return min;
 		}
-		if (incoming > 1.0) {
-			return 1.0;
+		if (incoming > max) {
+			return max;
 		}
 		return incoming;
 	}
 
+	private generateKeyframes(duration: number, endPos: Vector3): AnimationKeyframe[] {
+		return [{
+			time: 0 * duration,
+			value: { transform: { local: { position: new Vector3(0, 0, 0) } } }
+		}, {
+			time: 0.25 * duration,
+			value: { transform: { local: { position: endPos.multiplyByFloats(0.25, 0.25, 0.25) } } }
+		}, {
+			time: 0.5 * duration,
+			value: { transform: { local: { position: endPos.multiplyByFloats(0.5, 0.5, 0.5) } } }
+		}, {
+			time: 0.75 * duration,
+			value: { transform: { local: { position: endPos.multiplyByFloats(0.75, 0.75, 0.75) } } }
+		}];
+	}
 	public updateSound(handPos: Vector3) {
-		const ourDist = this.clampVal(this.computeFlatDistance(handPos));
+		const flatDist: number = this.computeFlatDistance(handPos);
+		const ourDist: number = this.clampVal(flatDist,0.0,1.0);
 
 		//if theremin is 1m tall, it ranges from -0.5 to 0.5. raise to range 0 to 1
-		const ourHeight = this.clampVal(handPos.y + 0.5); 
+		const ourHeight = this.clampVal(handPos.y + 0.5,0.0,1.0);
 
-		const ourPitch = (ourDist) * -30.0;
-		const ourVol = ourHeight;
+		const ourPitch = (1.0 - ourHeight) * -30.0;
+		let ourVol = (1.0 - ourDist);
 
-		/*log.info("app", this.handName);
-		log.info("app", "     dist: " + ourDist);
-		log.info("app", "     height: " + ourHeight);
-		log.info("app", "     pitch: " + ourPitch);
-		log.info("app", "     vol: " + ourVol);*/
+		//log.info("app", this.handName);
+		//log.info("app", "     dist: " + ourDist);
+		//log.info("app", "     height: " + ourHeight);
+		//log.info("app", "     pitch: " + ourPitch);
+		//log.info("app", "     vol: " + ourVol);
+
+		if (flatDist > 1.0) {
+			ourVol = 0.0;
+		}
 
 		this.playingSounds[1].setState(
 			{
 				pitch: ourPitch,
 				volume: ourVol
 			});
+
+		if (this.frameCounter % 3 === 0) {
+			if (flatDist < 1.0) {
+
+				this.cubeTarget = new Vector3(0, this.clampVal(handPos.y,-0.5,0.5), 0);
+
+				this.currentCube= this.visCubes.shift();
+				//for(const s in currentCube.animationsByName.keys())
+				//	log.info("app","animations: " + s);
+
+				this.currentCube.transform.local.position=handPos;
+				
+				//const values=colorsys.hsvToRgb(ourHeight,1.0,1.0); //TODO figure out HSV to RGB
+				this.currentCube.appearance.material.color=new Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);
+
+			
+				this.visCubes.push(this.currentCube); //add back to the end of the queue
+			}
+		}
+		if ((this.frameCounter - 1) % 3 === 0) {
+			if (this.currentCube) {
+				this.currentCube.animateTo({
+					transform: {
+						local: { position: this.cubeTarget }
+					}
+				}, 1.0 * flatDist, AnimationEaseCurves.Linear);
+			}
+		}
+		this.frameCounter++;
 	}
 }
+
 /**
  * The main class of this app. All the logic goes here.
  */
@@ -114,6 +194,9 @@ export default class HelloWorld {
 
 		const rHand = Actor.Create(this.context, {
 			actor: {
+				transform: {
+					local: { position: new Vector3(0,0.0,0.2) }
+				},
 				attachment: {
 					attachPoint: 'right-hand',
 					userId: user.id
@@ -126,6 +209,9 @@ export default class HelloWorld {
 
 		const lHand = Actor.Create(this.context, {
 			actor: {
+				transform: {
+					local: { position: new Vector3(0,0.0,0.2) }
+				},
 				attachment: {
 					attachPoint: 'left-hand',
 					userId: user.id
@@ -188,14 +274,14 @@ export default class HelloWorld {
 	private started() {
 		log.info("app", "our started callback has begun");
 
-		this.loadSound(`${this.baseUrl}/long_sine.mp3`);
-		this.loadSound(`${this.baseUrl}/long_saw.mp3`);
+		this.loadSound(`${this.baseUrl}/long_sine.wav`);
+		this.loadSound(`${this.baseUrl}/long_saw.wav`);
 
-		this.rightSoundHand = new SoundHand("right", this.context);
+		this.rightSoundHand = new SoundHand("right", this.context,this.assets);
 		this.rightSoundHand.playSound(this.ourSounds[0]);
 		this.rightSoundHand.playSound(this.ourSounds[1]);
 
-		this.leftSoundHand = new SoundHand("left", this.context);
+		this.leftSoundHand = new SoundHand("left", this.context,this.assets);
 		this.leftSoundHand.playSound(this.ourSounds[0]);
 		this.leftSoundHand.playSound(this.ourSounds[1]);
 
@@ -218,8 +304,8 @@ export default class HelloWorld {
 
 		//keep checking who has the closest hand to theremin. put that hand in charge
 		setInterval(() => {
-			this.ourLeftHand = this.findClosestHand(this.allLeftHands);
 			this.ourRightHand = this.findClosestHand(this.allRightHands);
+			this.ourLeftHand = this.findClosestHand(this.allLeftHands);
 		}, 1000); //fire every 1 sec
 	}
 }
