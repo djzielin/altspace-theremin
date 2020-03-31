@@ -183,16 +183,15 @@ export default class HelloWorld {
 					attachPoint: 'right-hand',
 					userId: user.id
 				},
-				subscriptions: ['transform']
+				//subscriptions: ['transform']
 			}
 		});
-		if(rHand)
-		{
+		if(rHand) {
 			MRE.log.info("app", "   added their right hand");
+			//rHand.unsubscribe('transform');
+			rHand.subscribe('transform');
 			this.allRightHands.set(user.id, rHand);
-		}
-		else
-		{
+		} else {
 			MRE.log.info("app", "   ERROR during hand creation!!");
 		}
 
@@ -205,17 +204,16 @@ export default class HelloWorld {
 					attachPoint: 'left-hand',
 					userId: user.id
 				},
-				subscriptions: ['transform']
+				//subscriptions: ['transform']
 			}
 		});
 		
-		if(lHand)
-		{
+		if(lHand) {
 			MRE.log.info("app", "   added their left hand");
+			//lHand.unsubscribe('transform');
+			lHand.subscribe('transform');
 			this.allLeftHands.set(user.id, lHand);
-		}
-		else
-		{
+		} else {
 			MRE.log.info("app", "   ERROR during hand creation!!");
 		}
 	}
@@ -242,15 +240,16 @@ export default class HelloWorld {
 		}
 	}
 
-	private findClosestHand(handMap: Map<string, MRE.Actor>) {
+	private findClosestHand(handName: string, handMap: Map<string, MRE.Actor>) {
 		let closestDist = Infinity;
 		let closestActor: MRE.Actor = null;
 		let closestIndex=-1;
 		let index=0;
 
+		MRE.log.info("app","Trying to find closest " + handName);
 		for (let hand of handMap.values()) {
 			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position);
-			MRE.log.info("app","for hand: " + index + " computed distance: " + hDist);
+			MRE.log.info("app","  examining user: " + index + " computed distance: " + hDist);
 			if (hDist < closestDist) {
 				closestDist = hDist;
 				closestActor = hand;
@@ -258,8 +257,7 @@ export default class HelloWorld {
 			}
 			index++;
 		}
-
-		MRE.log.info("app","num hands: " + handMap.size + " closest hand: " + closestIndex);
+		MRE.log.info("app","  closest hand is user: " + closestIndex);		
 
 		return closestActor;
 	}
@@ -308,8 +306,8 @@ export default class HelloWorld {
 
 		//keep checking who has the closest hand to theremin. put that hand in charge
 		setInterval(() => {
-			this.ourRightHand = this.findClosestHand(this.allRightHands);
-			this.ourLeftHand = this.findClosestHand(this.allLeftHands);
+			this.ourRightHand = this.findClosestHand("righthand",this.allRightHands);
+			this.ourLeftHand = this.findClosestHand("lefthand",this.allLeftHands);
 		}, 1000); //fire every 1 sec
 	}
 }
