@@ -3,50 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Actor,
-	AnimationEaseCurves,
-	AnimationKeyframe,
-	AnimationWrapMode,
-	AssetContainer,
-	//ButtonBehavior,
-	Context,
-	MediaInstance,
-	Mesh,
-	Material,
-	//Quaternion,
-	//TextAnchorLocation,
-	User,
-	Vector3,
-	Sound,
-	Color4
-} from '@microsoft/mixed-reality-extension-sdk';
+import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 
 import colorsys from 'colorsys';
 
-import { log } from '@microsoft/mixed-reality-extension-sdk/built/log';
+//import { log } from '@microsoft/mixed-reality-extension-sdk/built/log';
 
 class SoundHand {
-	private soundActor: Actor;
-	private playingSounds: MediaInstance[] = [];
-	private boxMesh: Mesh;
-	private visCubes: Actor[] = [];
+	private soundActor: MRE.Actor;
+	private playingSounds: MRE.MediaInstance[] = [];
+	private boxMesh: MRE.Mesh;
+	private visCubes: MRE.Actor[] = [];
 	private frameCounter=0;
-	private currentCube: Actor=null;
-	private cubeTarget: Vector3;
+	private currentCube: MRE.Actor=null;
+	private cubeTarget: MRE.Vector3;
 
 
-	constructor(private handName: string, private context: Context, private assets: AssetContainer) {
-		this.soundActor = Actor.Create(context);
+	constructor(private handName: string, private context: MRE.Context, private assets: MRE.AssetContainer) {
+		this.soundActor = MRE.Actor.Create(context);
 		this.boxMesh = this.assets.createBoxMesh('box', .02, 0.02, 0.02);
 
 		for(let i=0;i<30;i++)
 		{
-			const ourMat: Material = this.assets.createMaterial('cube mat',{
-				color: new Color4(1.0,1.0,1.0,1.0)
+			const ourMat: MRE.Material = this.assets.createMaterial('cube mat',{
+				color: new MRE.Color4(1.0,1.0,1.0,1.0)
 			});
 
-			const ourBox = Actor.Create(this.context, {
+			const ourBox = MRE.Actor.Create(this.context, {
 				actor: {
 					name: 'the box',
 					appearance: 
@@ -61,14 +44,14 @@ class SoundHand {
 		}
 	}
 
-	public computeFlatDistance(ourVec: Vector3) {
+	public computeFlatDistance(ourVec: MRE.Vector3) {
 		const tempPos = ourVec.clone();
 		tempPos.y = 0; //ignore height off the ground
 		return tempPos.length();
 	}
 
-	public playSound(theSound: Sound) {
-		const soundInstance: MediaInstance = this.soundActor.startSound(theSound.id, {
+	public playSound(theSound: MRE.Sound) {
+		const soundInstance: MRE.MediaInstance = this.soundActor.startSound(theSound.id, {
 			doppler: 0,
 			pitch: 0.0,
 			looping: true,
@@ -88,10 +71,10 @@ class SoundHand {
 		return incoming;
 	}
 
-	private generateKeyframes(duration: number, endPos: Vector3): AnimationKeyframe[] {
+	private generateKeyframes(duration: number, endPos: MRE.Vector3): MRE.AnimationKeyframe[] {
 		return [{
 			time: 0 * duration,
-			value: { transform: { local: { position: new Vector3(0, 0, 0) } } }
+			value: { transform: { local: { position: new MRE.Vector3(0, 0, 0) } } }
 		}, {
 			time: 0.25 * duration,
 			value: { transform: { local: { position: endPos.multiplyByFloats(0.25, 0.25, 0.25) } } }
@@ -103,7 +86,7 @@ class SoundHand {
 			value: { transform: { local: { position: endPos.multiplyByFloats(0.75, 0.75, 0.75) } } }
 		}];
 	}
-	public updateSound(handPos: Vector3) {
+	public updateSound(handPos: MRE.Vector3) {
 		const flatDist: number = this.computeFlatDistance(handPos);
 		const ourDist: number = this.clampVal(flatDist,0.0,1.0);
 
@@ -132,7 +115,7 @@ class SoundHand {
 		if (this.frameCounter % 3 === 0) {
 			if (flatDist < 1.0) {
 
-				this.cubeTarget = new Vector3(0, this.clampVal(handPos.y,-0.5,0.5), 0);
+				this.cubeTarget = new MRE.Vector3(0, this.clampVal(handPos.y,-0.5,0.5), 0);
 
 				this.currentCube= this.visCubes.shift();
 				//for(const s in currentCube.animationsByName.keys())
@@ -141,7 +124,7 @@ class SoundHand {
 				this.currentCube.transform.local.position=handPos;
 				
 				//const values=colorsys.hsvToRgb(ourHeight,1.0,1.0); //TODO figure out HSV to RGB
-				this.currentCube.appearance.material.color=new Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);
+				this.currentCube.appearance.material.color=new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);
 
 			
 				this.visCubes.push(this.currentCube); //add back to the end of the queue
@@ -153,7 +136,7 @@ class SoundHand {
 					transform: {
 						local: { position: this.cubeTarget }
 					}
-				}, 1.0 * flatDist, AnimationEaseCurves.Linear);
+				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
 			}
 		}
 		this.frameCounter++;
@@ -164,38 +147,38 @@ class SoundHand {
  * The main class of this app. All the logic goes here.
  */
 export default class HelloWorld {
-	private assets: AssetContainer;
+	private assets: MRE.AssetContainer;
 
 	private rightSoundHand: SoundHand = null;
 	private leftSoundHand: SoundHand = null;
 
 	private allLeftHands = new Map();
-	private ourLeftHand: Actor = null;
+	private ourLeftHand: MRE.Actor = null;
 
 	private allRightHands = new Map();
-	private ourRightHand: Actor = null;
+	private ourRightHand: MRE.Actor = null;
 
-	private ourSounds: Sound[] = [];
+	private ourSounds: MRE.Sound[] = [];
 
 	private userID: string;
 	private counter = 0;
 
-	constructor(private context: Context, private baseUrl: string) {
-		log.info("app", "our constructor started");
-		this.assets = new AssetContainer(context);
+	constructor(private context: MRE.Context, private baseUrl: string) {
+		MRE.log.info("app", "our constructor started");
+		this.assets = new MRE.AssetContainer(context);
 
 		this.context.onStarted(() => this.started());
 		this.context.onUserLeft(user => this.userLeft(user));
 		this.context.onUserJoined(user => this.userJoined(user));
 	}
 
-	private userJoined(user: User) {
-		log.info("app", "user joined. id: " + user.id);
+	private userJoined(user: MRE.User) {
+		MRE.log.info("app", "user joined. name: " + user.name + " id: " + user.id);
 
-		const rHand = Actor.Create(this.context, {
+		const rHand = MRE.Actor.Create(this.context, {
 			actor: {
 				transform: {
-					local: { position: new Vector3(0,0.0,0.2) }
+					local: { position: new MRE.Vector3(0,0.0,0.2) }
 				},
 				attachment: {
 					attachPoint: 'right-hand',
@@ -205,12 +188,12 @@ export default class HelloWorld {
 		});
 		rHand.subscribe('transform');
 		this.allRightHands.set(user.id, rHand);
-		log.info("app", "   added their right hand");
+		MRE.log.info("app", "   added their right hand");
 
-		const lHand = Actor.Create(this.context, {
+		const lHand = MRE.Actor.Create(this.context, {
 			actor: {
 				transform: {
-					local: { position: new Vector3(0,0.0,0.2) }
+					local: { position: new MRE.Vector3(0,0.0,0.2) }
 				},
 				attachment: {
 					attachPoint: 'left-hand',
@@ -220,59 +203,69 @@ export default class HelloWorld {
 		});
 		lHand.subscribe('transform');
 		this.allLeftHands.set(user.id, lHand);
-		log.info("app", "   added their left hand");
+		MRE.log.info("app", "   added their left hand");
 	}
 
-	private userLeft(user: User) {
-		log.info("app", "user left: " + user.name);
+	private userLeft(user: MRE.User) {
+		MRE.log.info("app", "user left. name: " + user.name + " id: " + user.id);
 
-		let lHand: Actor = this.allLeftHands.get(user);
-
-		if (lHand !== undefined) {
-			this.allLeftHands.delete(lHand);
-			lHand.destroy();
-			lHand = null;
-			log.info("app", "  succesfully remove left hand");
+		let lHand: MRE.Actor = this.allLeftHands.get(user.id);
+		if (lHand) {
+			this.allLeftHands.delete(user.id)
+			//lHand.destroy(); //why does this cause a bunch of errors to be thrown?
+			MRE.log.info("app", "  succesfully remove left hand");
+		}
+		else {
+			MRE.log.info("app", "  ERROR: no left hand found");
 		}
 
-
-		let rHand: Actor = this.allLeftHands.get(user);
-
-		if (rHand !== undefined) {
-			this.allRightHands.delete(rHand);
-			rHand.destroy();
-			rHand = null;
-			log.info("app", "  succesfully remove right hand");
+		let rHand: MRE.Actor = this.allRightHands.get(user.id);
+		if (rHand) {
+			this.allRightHands.delete(user.id);
+			//rHand.destroy(); //why does this cause a bunch of errors to be thrown?
+			MRE.log.info("app", "  succesfully remove right hand");
+		}
+		else {
+			MRE.log.info("app", "  ERROR: no right hand found");
 		}
 	}
 
-	private findClosestHand(handMap: Map<string, Actor>) {
+	private findClosestHand(handMap: Map<string, MRE.Actor>) {
 		let closestDist = Infinity;
-		let closestActor: Actor = null;
+		let closestActor: MRE.Actor = null;
+		let closestIndex=-1;
+		let index=0;
 
 		for (let hand of handMap.values()) {
 			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position);
+			hand.subscribe('transform');
+			MRE.log.info("app","for hand: " + index + " computed distance: " + hDist);
 			if (hDist < closestDist) {
 				closestDist = hDist;
 				closestActor = hand;
+				closestIndex = index;
 			}
+			index++;
 		}
+
+		MRE.log.info("app","num hands: " + handMap.size + " closest hand: " + closestIndex);
+
 		return closestActor;
 	}
 
 	private loadSound(filename: string) {
-		log.info("app", "trying to load filename: " + filename);
+		MRE.log.info("app", "trying to load filename: " + filename);
 		const newSound = this.assets.createSound("dave long sound", {
 			uri: filename
 		});
 		if (newSound) {
-			log.info("app", "   succesfully loaded sound!");
+			MRE.log.info("app", "   succesfully loaded sound!");
 		}
 		this.ourSounds.push(newSound);
 	}
 
 	private started() {
-		log.info("app", "our started callback has begun");
+		MRE.log.info("app", "our started callback has begun");
 
 		this.loadSound(`${this.baseUrl}/long_sine.wav`);
 		this.loadSound(`${this.baseUrl}/long_saw.wav`);
@@ -286,7 +279,7 @@ export default class HelloWorld {
 		this.leftSoundHand.playSound(this.ourSounds[1]);
 
 		const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
-		const ourPole = Actor.Create(this.context, {
+		const ourPole = MRE.Actor.Create(this.context, {
 			actor: {
 				name: 'the pole',
 				appearance: { meshId: circle.id }
