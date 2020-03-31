@@ -23,8 +23,7 @@ class SoundHand {
 		this.soundActor = MRE.Actor.Create(context);
 		this.boxMesh = this.assets.createBoxMesh('box', .02, 0.02, 0.02);
 
-		for(let i=0;i<30;i++)
-		{
+		for(let i=0;i<30;i++) {
 			const ourMat: MRE.Material = this.assets.createMaterial('cube mat',{
 				color: new MRE.Color4(1.0,1.0,1.0,1.0)
 			});
@@ -183,12 +182,19 @@ export default class HelloWorld {
 				attachment: {
 					attachPoint: 'right-hand',
 					userId: user.id
-				}
+				},
+				subscriptions: ['transform']
 			}
 		});
-		rHand.subscribe('transform');
-		this.allRightHands.set(user.id, rHand);
-		MRE.log.info("app", "   added their right hand");
+		if(rHand)
+		{
+			MRE.log.info("app", "   added their right hand");
+			this.allRightHands.set(user.id, rHand);
+		}
+		else
+		{
+			MRE.log.info("app", "   ERROR during hand creation!!");
+		}
 
 		const lHand = MRE.Actor.Create(this.context, {
 			actor: {
@@ -198,34 +204,40 @@ export default class HelloWorld {
 				attachment: {
 					attachPoint: 'left-hand',
 					userId: user.id
-				}
+				},
+				subscriptions: ['transform']
 			}
 		});
-		lHand.subscribe('transform');
-		this.allLeftHands.set(user.id, lHand);
-		MRE.log.info("app", "   added their left hand");
+		
+		if(lHand)
+		{
+			MRE.log.info("app", "   added their left hand");
+			this.allLeftHands.set(user.id, lHand);
+		}
+		else
+		{
+			MRE.log.info("app", "   ERROR during hand creation!!");
+		}
 	}
 
 	private userLeft(user: MRE.User) {
 		MRE.log.info("app", "user left. name: " + user.name + " id: " + user.id);
 
-		let lHand: MRE.Actor = this.allLeftHands.get(user.id);
+		const lHand: MRE.Actor = this.allLeftHands.get(user.id);
 		if (lHand) {
 			this.allLeftHands.delete(user.id)
 			//lHand.destroy(); //why does this cause a bunch of errors to be thrown?
 			MRE.log.info("app", "  succesfully remove left hand");
-		}
-		else {
+		} else {
 			MRE.log.info("app", "  ERROR: no left hand found");
 		}
 
-		let rHand: MRE.Actor = this.allRightHands.get(user.id);
+		const rHand: MRE.Actor = this.allRightHands.get(user.id);
 		if (rHand) {
 			this.allRightHands.delete(user.id);
 			//rHand.destroy(); //why does this cause a bunch of errors to be thrown?
 			MRE.log.info("app", "  succesfully remove right hand");
-		}
-		else {
+		} else {
 			MRE.log.info("app", "  ERROR: no right hand found");
 		}
 	}
@@ -238,7 +250,6 @@ export default class HelloWorld {
 
 		for (let hand of handMap.values()) {
 			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position);
-			hand.subscribe('transform');
 			MRE.log.info("app","for hand: " + index + " computed distance: " + hDist);
 			if (hDist < closestDist) {
 				closestDist = hDist;
