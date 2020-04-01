@@ -43,7 +43,7 @@ export default class HelloWorld {
 		const rHand = MRE.Actor.Create(this.context, {
 			actor: {
 				transform: {
-					local: { position: new MRE.Vector3(0,0.0,0.2) }
+					local: { position: new MRE.Vector3(0, 0.0, 0.2) }
 				},
 				attachment: {
 					attachPoint: 'right-hand',
@@ -52,7 +52,7 @@ export default class HelloWorld {
 				//subscriptions: ['transform']
 			}
 		});
-		if(rHand) {
+		if (rHand) {
 			MRE.log.info("app", "   added their right hand");
 			rHand.subscribe('transform');
 			this.allRightHands.set(user.id, rHand);
@@ -63,7 +63,7 @@ export default class HelloWorld {
 		const lHand = MRE.Actor.Create(this.context, {
 			actor: {
 				transform: {
-					local: { position: new MRE.Vector3(0,0.0,0.2) }
+					local: { position: new MRE.Vector3(0, 0.0, 0.2) }
 				},
 				attachment: {
 					attachPoint: 'left-hand',
@@ -72,8 +72,8 @@ export default class HelloWorld {
 				//subscriptions: ['transform']
 			}
 		});
-		
-		if(lHand) {
+
+		if (lHand) {
 			MRE.log.info("app", "   added their left hand");
 			lHand.subscribe('transform');
 			this.allLeftHands.set(user.id, lHand);
@@ -104,6 +104,7 @@ export default class HelloWorld {
 		}
 	}
 
+	/*
 	private findClosestHand(handName: string, handMap: Map<string, MRE.Actor>) {
 		let closestDist = Infinity;
 		let closestActor: MRE.Actor = null;
@@ -124,7 +125,7 @@ export default class HelloWorld {
 		MRE.log.info("app","  closest hand is user: " + closestIndex);		
 
 		return closestActor;
-	}
+	}*/
 
 	private loadSound(filename: string) {
 		MRE.log.info("app", "trying to load filename: " + filename);
@@ -143,35 +144,38 @@ export default class HelloWorld {
 		this.loadSound(`${this.baseUrl}/long_sine.wav`);
 		this.loadSound(`${this.baseUrl}/long_saw.wav`);
 
-		this.rightSoundHand = new SoundHand("right", this.context,this.assets);
+		this.rightSoundHand = new SoundHand("right", this.context, this.assets);
 		this.rightSoundHand.playSound(this.ourSounds[0]);
 		this.rightSoundHand.playSound(this.ourSounds[1]);
 
-		this.leftSoundHand = new SoundHand("left", this.context,this.assets);
+		this.leftSoundHand = new SoundHand("left", this.context, this.assets);
 		this.leftSoundHand.playSound(this.ourSounds[0]);
 		this.leftSoundHand.playSound(this.ourSounds[1]);
 
-		const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
+		/*const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
 		const ourPole = MRE.Actor.Create(this.context, {
 			actor: {
 				name: 'the pole',
 				appearance: { meshId: circle.id }
 			}
-		});
+		});*/
 
 		setInterval(() => {
-			if (this.ourRightHand) {
-				this.rightSoundHand.updateSound(this.ourRightHand.transform.app.position);
+			if (this.allRightHands.size > 1) {
+				const hands = Array.from(this.allRightHands.values());
+				this.rightSoundHand.updateSound(hands[0].transform.app.position,
+					hands[1].transform.app.position);
 			}
-			if (this.ourLeftHand) {
+			/*if (this.ourLeftHand) {
 				this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
-			}
+			}*/
 		}, 30); //fire every 30ms
 
 		//keep checking who has the closest hand to theremin. put that hand in charge
-		setInterval(() => {
+		/*setInterval(() => {
 			this.ourRightHand = this.findClosestHand("righthand",this.allRightHands);
 			this.ourLeftHand = this.findClosestHand("lefthand",this.allLeftHands);
 		}, 1000); //fire every 1 sec
+		*/
 	}
 }

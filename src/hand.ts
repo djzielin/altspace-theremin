@@ -12,8 +12,11 @@ export default class SoundHand {
 	private boxMesh: MRE.Mesh;
 	private visCubes: MRE.Actor[] = [];
 	private frameCounter=0;
+
 	private currentCube: MRE.Actor=null;
 	private cubeTarget: MRE.Vector3;
+	private currentCube2: MRE.Actor=null;
+	private cubeTarget2: MRE.Vector3;
 
 
 	constructor(private handName: string, private context: MRE.Context, private assets: MRE.AssetContainer) {
@@ -40,11 +43,14 @@ export default class SoundHand {
 		}
 	}
 
-	public computeFlatDistance(ourVec: MRE.Vector3) {
+	public computeFlatDistance(ourVec: MRE.Vector3, ourVec2: MRE.Vector3) {
 		const tempPos = ourVec.clone();
+		const tempPos2=ourVec2.clone();
 		tempPos.y = 0; //ignore height off the ground
-		return tempPos.length();
+		tempPos2.y=0;
+		return (tempPos.subtract(tempPos2)).length();
 	}
+
 
 	public playSound(theSound: MRE.Sound) {
 		const soundInstance: MRE.MediaInstance = this.soundActor.startSound(theSound.id, {
@@ -82,15 +88,12 @@ export default class SoundHand {
 			value: { transform: { local: { position: endPos.multiplyByFloats(0.75, 0.75, 0.75) } } }
 		}];
 	}
-	public updateSound(handPos: MRE.Vector3) {
-		const flatDist: number = this.computeFlatDistance(handPos);
-		const ourDist: number = this.clampVal(flatDist,0.0,1.0);
+	public updateSound(handPos: MRE.Vector3,handPos2: MRE.Vector3) {
+		const flatDist: number = this.computeFlatDistance(handPos,handPos2);
+		const distClamped: number = this.clampVal(flatDist,0.0,2.0);
 
-		//if theremin is 1m tall, it ranges from -0.5 to 0.5. raise to range 0 to 1
-		const ourHeight = this.clampVal(handPos.y + 0.5,0.0,1.0);
-
-		const ourPitch = (1.0 - ourHeight) * -30.0;
-		let ourVol = (1.0 - ourDist);
+		const ourPitch = (distClamped*0.5) * -30.0;
+		let ourVol = 1.0;
 
 		//log.info("app", this.handName);
 		//log.info("app", "     dist: " + ourDist);
@@ -98,7 +101,7 @@ export default class SoundHand {
 		//log.info("app", "     pitch: " + ourPitch);
 		//log.info("app", "     vol: " + ourVol);
 
-		if (flatDist > 1.0) {
+		if (flatDist > 2.0) {
 			ourVol = 0.0;
 		}
 
@@ -109,21 +112,23 @@ export default class SoundHand {
 			});
 
 		if (this.frameCounter % 3 === 0) {
-			if (flatDist < 1.0) {
+			if (flatDist < 2.0) {
 
-				this.cubeTarget = new MRE.Vector3(0, this.clampVal(handPos.y,-0.5,0.5), 0);
-
+				this.cubeTarget = handPos2;
 				this.currentCube= this.visCubes.shift();
-				//for(const s in currentCube.animationsByName.keys())
-				//	log.info("app","animations: " + s);
-
-				this.currentCube.transform.local.position=handPos;
-				
-				//const values=colorsys.hsvToRgb(ourHeight,1.0,1.0); //TODO figure out HSV to RGB
-				this.currentCube.appearance.material.color=new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);
-
-			
+				this.currentCube.transform.local.position=handPos;	
+				//this.currentCube.appearance.material.color=
+				//	new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);			
 				this.visCubes.push(this.currentCube); //add back to the end of the queue
+
+				this.cubeTarget2 = handPos;
+				this.currentCube2= this.visCubes.shift();
+				this.currentCube2.transform.local.position=handPos2;	
+				//this.currentCube.appearance.material.color=
+				//  new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);			
+				this.visCubes.push(this.currentCube2); //add back to the end of the queue
+
+
 			}
 		}
 		if ((this.frameCounter - 1) % 3 === 0) {
@@ -131,6 +136,13 @@ export default class SoundHand {
 				this.currentCube.animateTo({
 					transform: {
 						local: { position: this.cubeTarget }
+					}
+				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
+			}
+			if (this.currentCube2) {
+				this.currentCube2.animateTo({
+					transform: {
+						local: { position: this.cubeTarget2 }
 					}
 				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
 			}
