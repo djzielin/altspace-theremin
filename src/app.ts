@@ -139,6 +139,7 @@ export default class HelloWorld {
 		}
 	}
 
+	/*
 	private findClosestHand(handName: string, handMap: Map<string, MRE.Actor>) {
 		let closestDist = Infinity;
 		let closestActor: MRE.Actor = null;
@@ -164,7 +165,7 @@ export default class HelloWorld {
 		MRE.log.info("app","  closest hand is user: " + closestIndex);		
 
 		return closestActor;
-	}
+	}*/
 
 	private loadSound(filename: string) {
 		MRE.log.info("app", "trying to load filename: " + filename);
@@ -183,30 +184,32 @@ export default class HelloWorld {
 		this.loadSound(`${this.baseUrl}/long_sine.wav`);
 		this.loadSound(`${this.baseUrl}/long_saw.wav`);
 
-		this.rightSoundHand = new SoundHand("right", this.context,this.assets);
+		this.rightSoundHand = new SoundHand("right", this.context, this.assets);
 		this.rightSoundHand.playSound(this.ourSounds[0]);
 		this.rightSoundHand.playSound(this.ourSounds[1]);
 
-		this.leftSoundHand = new SoundHand("left", this.context,this.assets);
+		this.leftSoundHand = new SoundHand("left", this.context, this.assets);
 		this.leftSoundHand.playSound(this.ourSounds[0]);
 		this.leftSoundHand.playSound(this.ourSounds[1]);
 
-		const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
+		/*const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
 		const ourPole = MRE.Actor.Create(this.context, {
 			actor: {
 				name: 'the pole',
 				appearance: { meshId: circle.id }
 			}
-		});
+		});*/
 
 		/*
 		setInterval(() => {
-			if (this.ourRightHand) {
-				this.rightSoundHand.updateSound(this.ourRightHand.transform.app.position);
+			if (this.allRightHands.size > 1) {
+				const hands = Array.from(this.allRightHands.values());
+				this.rightSoundHand.updateSound(hands[0].transform.app.position,
+					hands[1].transform.app.position);
 			}
-			if (this.ourLeftHand) {
-				this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
-			}
+			//if (this.ourLeftHand) {
+			//	this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
+			//}
 		}, 30); //fire every 30ms
 		*/
 
