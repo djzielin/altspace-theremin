@@ -146,16 +146,14 @@ export default class HelloWorld {
 	private started() {
 		MRE.log.info("app", "our started callback has begun");
 
-		this.loadSound(`${this.baseUrl}/long_sine.wav`);
-		this.loadSound(`${this.baseUrl}/long_saw.wav`);
+		//this.loadSound(`${this.baseUrl}/noise_20s.wav`);
+		this.loadSound(`${this.baseUrl}/saw_20s.wav`);
 
 		this.rightSoundHand = new SoundHand("right", this.context, this.assets);
 		this.rightSoundHand.playSound(this.ourSounds[0]);
-		this.rightSoundHand.playSound(this.ourSounds[1]);
 
 		this.leftSoundHand = new SoundHand("left", this.context, this.assets);
 		this.leftSoundHand.playSound(this.ourSounds[0]);
-		this.leftSoundHand.playSound(this.ourSounds[1]);
 
 		const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
 		const ourPole = MRE.Actor.Create(this.context, {

@@ -5,7 +5,7 @@
 
 //import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 import * as MRE from '../../mixed-reality-extension-sdk/packages/sdk'; //using our modded version of MRE
-import { Vector3 } from '../../mixed-reality-extension-sdk/packages/sdk';
+import { Vector3, log } from '../../mixed-reality-extension-sdk/packages/sdk';
 
 //import colorsys from 'colorsys';
 
@@ -29,9 +29,13 @@ export default class SoundHand {
 
 			const ourBox = MRE.Actor.Create(this.context, {
 				actor: {
-					name: 'the box',
-					appearance: 
-					{ 
+					name: 'box'+i,
+					transform: {
+						local: { position: new MRE.Vector3(0, 0, 0) },
+						app: { position: new MRE.Vector3(0, 0, 0) }
+					},
+					appearance:
+					{
 						meshId: this.boxMesh.id,
 						materialId: ourMat.id
 					},
@@ -71,6 +75,22 @@ export default class SoundHand {
 		return incoming;
 	}
 
+	private lerp(t: number, start: Vector3, end: Vector3) {
+		const computedPos=start.multiplyByFloats(1 - t,1 - t,1 - t).add(end.multiplyByFloats(t,t,t));
+		//log.info("app","lerp computatioN: " + computedPos);
+		return computedPos;
+	}
+
+	private generateKeyframes(duration: number, startPos: MRE.Vector3, endPos: MRE.Vector3): MRE.AnimationKeyframe[] {
+		return [{
+			time: 0 * duration,
+			value: { transform: { local: { position: this.lerp(0.0,startPos,endPos) } } }
+		}, {
+			time: 1.0 * duration,
+			value: { transform: { local: { position: this.lerp(1.0,startPos,endPos) } } }
+		}];
+	}
+
 	public updateSound(handPos: MRE.Vector3) {
 		const flatDist: number = this.computeFlatDistance(handPos,new Vector3(0,0,0));
 		const distClamped: number = this.clampVal(flatDist,0.0,1.0);
@@ -91,7 +111,7 @@ export default class SoundHand {
 			ourVol = 0.0;
 		}
 
-		this.playingSounds[1].setState(
+		this.playingSounds[0].setState(
 			{
 				pitch: ourPitch,
 				volume: ourVol
@@ -99,19 +119,27 @@ export default class SoundHand {
 
 		if (this.frameCounter % 3 === 0) {
 			if (flatDist < 1.0) {
-
-				this.cubeTarget = new Vector3(0,handPos.y,0);
-				this.currentCube= this.visCubes.shift();
-				this.currentCube.transform.local.position=handPos;	
-				this.currentCube.appearance.material.color=
-					new MRE.Color4(heightClamped, 1.0-heightClamped, 0.0, 1.0);			
-				this.visCubes.push(this.currentCube); //add back to the end of the queue
+				this.cubeTarget = new Vector3(0, this.clampVal(handPos.y, -0.5, 0.5), 0);
+				this.currentCube = this.visCubes.shift();		
+				this.currentCube.transform.local.position = handPos;
+				this.currentCube.appearance.material.color =
+					new MRE.Color4(heightClamped, 1.0 - heightClamped, 0.0, 1.0);
+				this.visCubes.push(this.currentCube); //add back to the end of the queue				
 			}
 		}
 
 		//for some reason waiting one frame gives time for position change take effect
-		if ((this.frameCounter - 1) % 3 === 0) { 
+		if ((this.frameCounter - 1) % 3 === 0) {
 			if (this.currentCube) {
+				
+				/*const animationName = 'MoveToPole' + this.frameCounter;
+				this.currentCube.createAnimation(animationName, {
+					initialState: {	enabled: true, },
+					keyframes: this.generateKeyframes(1.0 * flatDist, handPos, this.cubeTarget),
+					events: [],
+					wrapMode: MRE.AnimationWrapMode.Once
+				});*/				
+
 				this.currentCube.animateTo({
 					transform: {
 						local: { position: this.cubeTarget }
