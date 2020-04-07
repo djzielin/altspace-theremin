@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { WebHost } from '@microsoft/mixed-reality-extension-sdk';
+//import { WebHost } from '@microsoft/mixed-reality-extension-sdk';
+import { WebHost } from '../../mixed-reality-extension-sdk/packages/sdk/';
+
 import dotenv from 'dotenv';
 import { resolve as resolvePath } from 'path';
 import App from './app';
