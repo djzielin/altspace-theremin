@@ -74,10 +74,12 @@ export default class SoundHand {
 	public updateSound(handPos: MRE.Vector3) {
 		const flatDist: number = this.computeFlatDistance(handPos,new Vector3(0,0,0));
 		const distClamped: number = this.clampVal(flatDist,0.0,1.0);
-		const ourHeight = this.clampVal(handPos.y + 0.5,0.0,1.0);
 
-		const ourPitch = (1.0 - distClamped) * -30.0;
-		let ourVol = ourHeight;
+		const height = handPos.y + 0.5; //since pole ranges from -0.5 -> 0.5 
+		const heightClamped = this.clampVal(height,0.0,1.0);
+
+		const ourPitch = (1.0 - heightClamped) * -30.0;
+		let ourVol = 1.0-distClamped;
 
 		//log.info("app", this.handName);
 		//log.info("app", "     dist: " + ourDist);
@@ -102,7 +104,7 @@ export default class SoundHand {
 				this.currentCube= this.visCubes.shift();
 				this.currentCube.transform.local.position=handPos;	
 				this.currentCube.appearance.material.color=
-					new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);			
+					new MRE.Color4(heightClamped, 1.0-heightClamped, 0.0, 1.0);			
 				this.visCubes.push(this.currentCube); //add back to the end of the queue
 			}
 		}
