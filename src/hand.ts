@@ -98,7 +98,7 @@ export default class SoundHand {
 		if (this.frameCounter % 3 === 0) {
 			if (flatDist < 1.0) {
 
-				this.cubeTarget = new Vector3(0,0,0);
+				this.cubeTarget = new Vector3(0,handPos.y,0);
 				this.currentCube= this.visCubes.shift();
 				this.currentCube.transform.local.position=handPos;	
 				this.currentCube.appearance.material.color=
@@ -117,7 +117,7 @@ export default class SoundHand {
 				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
 			}
 		}
-		
+
 		this.frameCounter++;
 	}
 }

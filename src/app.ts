@@ -7,6 +7,7 @@ import * as MRE from '../../mixed-reality-extension-sdk/packages/sdk/';
 
 //import colorsys from 'colorsys';
 import SoundHand from './hand'
+import { Vector3 } from '../../mixed-reality-extension-sdk/packages/sdk/';
 
 /**
  * The main class of this app. All the logic goes here.
@@ -100,6 +101,12 @@ export default class HelloWorld {
 			MRE.log.info("app", "  ERROR: no right hand found");
 		}
 	}
+
+	private Vector2String(v: Vector3, precision: number){
+		return 	"{X: " + v.x.toFixed(precision) +
+				" Y: " + v.y.toFixed(precision) + 
+				" Z: " + v.z.toFixed(precision) + "}";
+	}
 	
 	private findClosestHand(handName: string, handMap: Map<string, MRE.Actor>) {
 		let closestDist = Infinity;
@@ -109,8 +116,10 @@ export default class HelloWorld {
 
 		MRE.log.info("app","Trying to find closest " + handName);
 		for (let hand of handMap.values()) {
-			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position);
-			MRE.log.info("app","  user: " + index + " position: " + position + " computed distance: " + hDist);
+			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position, new Vector3(0,0,0));
+			MRE.log.info("app","  user: " + index + 
+								" pos: " + this.Vector2String(hand.transform.app.position,3) +
+								" dist: " + hDist.toFixed(3));
 			if (hDist < closestDist) {
 				closestDist = hDist;
 				closestActor = hand;
