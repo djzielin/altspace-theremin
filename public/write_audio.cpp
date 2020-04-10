@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #include <sndfile.h>
 #include <string>
@@ -75,8 +76,9 @@ bool generate_harmonic(int harmonic)
    double two_pi=2.0 * (double)M_PI;
    double freq = 440.0;
    double inc = freq * (double)harmonic * two_pi / (double)sample_rate;
-   double phase = 0;
-
+   double phase = 0; //((double)rand() / RAND_MAX) * two_pi;
+   printf("setting initial phase to: %f\n",phase); 
+   
    double newFreq = freq * (double)harmonic;
    double halfFreq = (double)sample_rate / 2.0;
 
@@ -108,6 +110,7 @@ bool generate_harmonic(int harmonic)
 int main(void)
 {
    printf("starting up write_audio!\n");
+   srand (time(NULL)); 
    sample_count = ((int)((float)sample_rate * 0.200f));
 
    memset(&sfinfo, 0, sizeof(sfinfo));
