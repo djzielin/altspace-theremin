@@ -157,22 +157,28 @@ export default class HelloWorld {
 		this.leftSoundHand = new SoundHand("left", this.context, this.assets);
 		this.leftSoundHand.playSound(this.ourSounds[0]);
 
-		setInterval(() => {
-			if (this.allRightHands.size > 1) {
-				const hands = Array.from(this.allRightHands.values());
-				this.rightSoundHand.updateSound("righthand",hands[0].transform.app.position,
-					hands[1].transform.app.position);
+		const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
+		const ourPole = MRE.Actor.Create(this.context, {
+			actor: {
+				name: 'the pole',
+				appearance: { meshId: circle.id }
 			}
-			//if (this.ourLeftHand) {
-		//		this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
-		//	}
+		});
+
+		setInterval(() => {
+			if (this.ourRightHand) {
+				this.ourRightHand.updateSound(this.ourRightHand.transform.app.position);
+			}
+			if (this.ourLeftHand) {
+				this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
+			}
 		}, 30); //fire every 30ms
 		
 
 		//keep checking who has the closest hand to theremin. put that hand in charge
 		setInterval(() => {
 			this.ourRightHand = this.findClosestHand("righthand",this.allRightHands);
-			//this.ourLeftHand = this.findClosestHand("lefthand",this.allLeftHands);
+			this.ourLeftHand = this.findClosestHand("lefthand",this.allLeftHands);
 		}, 1000); //fire every 1 sec
 	}
 }
