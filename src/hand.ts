@@ -17,8 +17,6 @@ export default class SoundHand {
 	private frameCounter=0;
 	private currentCube: MRE.Actor=null;
 	private cubeTarget: MRE.Vector3;
-	private currentCube2: MRE.Actor=null;
-	private cubeTarget2: MRE.Vector3;
 
 	constructor(private handName: string, private context: MRE.Context, private assets: MRE.AssetContainer) {
 		this.soundActor = MRE.Actor.Create(context);
@@ -77,14 +75,17 @@ export default class SoundHand {
 		return incoming;
 	}
 
-	public updateSound(handName: string, handPos: MRE.Vector3,handPos2: MRE.Vector3) {
-		const flatDist: number = this.computeFlatDistance(handPos,handPos2);
-		const distClamped: number = this.clampVal(flatDist,0.0,2.0);
+	public updateSound(handName: string, handPos: MRE.Vector3) {
+		const flatDist: number = this.computeFlatDistance(handPos,new Vector3(0,0,0));
+		const distClamped: number = this.clampVal(flatDist,0.0,1.0);
 
-		const ourPitch = (distClamped*0.5) * -30.0;
-		let ourVol = 1.0;
+		const ourHeight = this.clampVal(handPos.y + 0.5,0.0,1.0);
+
+		const ourPitch = (1.0 - ourHeight) * -30.0;
+		let ourVol = (1.0 - distClamped);
+
 		
-		if (flatDist > 2.0) {
+		if (flatDist > 1.0) {
 			ourVol = 0.0;
 		}
 
@@ -104,33 +105,19 @@ export default class SoundHand {
 			});
 
 		if (this.frameCounter % 3 === 0) {
-			if (flatDist < 2.0) {
+			if (flatDist < 1.0) {
 
-				this.cubeTarget = handPos2;
+				this.cubeTarget = new MRE.Vector3(0, this.clampVal(handPos.y,-0.5,0.5), 0);
 				this.currentCube= this.visCubes.shift();
 				this.currentCube.transform.local.position=handPos;	
 				this.currentCube.appearance.material.color=	new MRE.Color4(1.0, 0.0, 0.0, 1.0);			
 				this.visCubes.push(this.currentCube); //add back to the end of the queue
-
-				this.cubeTarget2 = handPos;
-				this.currentCube2= this.visCubes.shift();
-				this.currentCube2.transform.local.position=handPos2;	
-				this.currentCube2.appearance.material.color=	new MRE.Color4(0.0, 1.0, 0.0, 1.0);					
-				this.visCubes.push(this.currentCube2); //add back to the end of the queue
 			}
 		}
 
 		//for some reason waiting one frame gives time for position change take effect
 		if ((this.frameCounter - 1) % 3 === 0) {
 			if (this.currentCube) {
-				
-				/*const animationName = 'MoveToPole' + this.frameCounter;
-				this.currentCube.createAnimation(animationName, {
-					initialState: {	enabled: true, },
-					keyframes: this.generateKeyframes(1.0 * flatDist, handPos, this.cubeTarget),
-					events: [],
-					wrapMode: MRE.AnimationWrapMode.Once
-				});*/				
 
 				this.currentCube.animateTo({
 					transform: {

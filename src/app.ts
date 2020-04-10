@@ -167,7 +167,7 @@ export default class HelloWorld {
 
 		setInterval(() => {
 			if (this.ourRightHand) {
-				this.ourRightHand.updateSound(this.ourRightHand.transform.app.position);
+				this.rightSoundHand.updateSound(this.ourRightHand.transform.app.position);
 			}
 			if (this.ourLeftHand) {
 				this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
