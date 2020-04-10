@@ -167,10 +167,10 @@ export default class HelloWorld {
 
 		setInterval(() => {
 			if (this.ourRightHand) {
-				this.rightSoundHand.updateSound(this.ourRightHand.transform.app.position);
+				this.rightSoundHand.updateSound("righthand",this.ourRightHand.transform.app.position);
 			}
 			if (this.ourLeftHand) {
-				this.leftSoundHand.updateSound(this.ourLeftHand.transform.app.position);
+				this.leftSoundHand.updateSound("lefthand",this.ourLeftHand.transform.app.position);
 			}
 		}, 30); //fire every 30ms
 		

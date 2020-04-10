@@ -98,7 +98,7 @@ export default class SoundHand {
 		//MRE.log.info("app", "     vol: " + ourVol);
 
 
-		this.playingSounds[1].setState(
+		this.playingSounds[0].setState(
 			{
 				pitch: ourPitch,
 				volume: ourVol
