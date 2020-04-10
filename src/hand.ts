@@ -105,18 +105,8 @@ export default class SoundHand {
 			});
 
 		if (this.frameCounter % 3 === 0) {
-			if (flatDist < 1.0) {
-
-				this.cubeTarget = new MRE.Vector3(0, this.clampVal(handPos.y,-0.5,0.5), 0);
-				this.currentCube= this.visCubes.shift();
-				this.currentCube.transform.local.position=handPos;	
-				this.currentCube.appearance.material.color=	new MRE.Color4(1.0, 0.0, 0.0, 1.0);			
-				this.visCubes.push(this.currentCube); //add back to the end of the queue
-			}
-		}
-
-		//for some reason waiting one frame gives time for position change take effect
-		if ((this.frameCounter - 1) % 3 === 0) {
+			//for some reason waiting one frame gives time for position change take effect
+			//start the animateTo for the previous cube now!
 			if (this.currentCube) {
 
 				this.currentCube.animateTo({
@@ -124,6 +114,21 @@ export default class SoundHand {
 						local: { position: this.cubeTarget }
 					}
 				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
+			}
+
+			if (flatDist < 1.0) {
+				this.currentCube = this.visCubes.shift();
+				this.currentCube.transform.app.position = new Vector3(0, 0, 0);
+
+				const jiggledHandPos = new Vector3(
+					handPos.x + (Math.random() * 0.005),
+					handPos.y + (Math.random() * 0.005),
+					handPos.z + (Math.random() * 0.005));
+				this.currentCube.transform.local.position = jiggledHandPos;
+
+				this.cubeTarget = new MRE.Vector3(0, this.clampVal(handPos.y, -0.5, 0.5), 0);
+				this.currentCube.appearance.material.color = new MRE.Color4(1.0, 0.0, 0.0, 1.0);
+				this.visCubes.push(this.currentCube); //add back to the end of the queue
 			}
 		}
 
