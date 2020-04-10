@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as MRE from '@microsoft/mixed-reality-extension-sdk';
+//import * as MRE from '@microsoft/mixed-reality-extension-sdk';
+import * as MRE from '../../mixed-reality-extension-sdk/packages/sdk'; //using our modded version of MRE
+import { Vector3, log } from '../../mixed-reality-extension-sdk/packages/sdk';
+
 //import colorsys from 'colorsys';
 
 export default class SoundHand {
@@ -12,12 +15,10 @@ export default class SoundHand {
 	private boxMesh: MRE.Mesh;
 	private visCubes: MRE.Actor[] = [];
 	private frameCounter=0;
-
 	private currentCube: MRE.Actor=null;
 	private cubeTarget: MRE.Vector3;
 	private currentCube2: MRE.Actor=null;
 	private cubeTarget2: MRE.Vector3;
-
 
 	constructor(private handName: string, private context: MRE.Context, private assets: MRE.AssetContainer) {
 		this.soundActor = MRE.Actor.Create(context);
@@ -30,9 +31,13 @@ export default class SoundHand {
 
 			const ourBox = MRE.Actor.Create(this.context, {
 				actor: {
-					name: 'the box',
-					appearance: 
-					{ 
+					name: 'box'+i,
+					transform: {
+						local: { position: new MRE.Vector3(0, 0, 0) },
+						app: { position: new MRE.Vector3(0, 0, 0) }
+					},
+					appearance:
+					{
 						meshId: this.boxMesh.id,
 						materialId: ourMat.id
 					},
@@ -59,7 +64,7 @@ export default class SoundHand {
 			volume: 0.0
 		});
 
-		this.playingSounds.push(soundInstance); //store for potential later use
+		this.playingSounds.push(soundInstance); //store for later use
 	}
 
 	private clampVal(incoming: number, min: number, max: number): number {
@@ -114,22 +119,27 @@ export default class SoundHand {
 				this.visCubes.push(this.currentCube2); //add back to the end of the queue
 			}
 		}
+
+		//for some reason waiting one frame gives time for position change take effect
 		if ((this.frameCounter - 1) % 3 === 0) {
 			if (this.currentCube) {
+				
+				/*const animationName = 'MoveToPole' + this.frameCounter;
+				this.currentCube.createAnimation(animationName, {
+					initialState: {	enabled: true, },
+					keyframes: this.generateKeyframes(1.0 * flatDist, handPos, this.cubeTarget),
+					events: [],
+					wrapMode: MRE.AnimationWrapMode.Once
+				});*/				
+
 				this.currentCube.animateTo({
 					transform: {
 						local: { position: this.cubeTarget }
 					}
 				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
 			}
-			if (this.currentCube2) {
-				this.currentCube2.animateTo({
-					transform: {
-						local: { position: this.cubeTarget2 }
-					}
-				}, 1.0 * flatDist, MRE.AnimationEaseCurves.Linear);
-			}
 		}
+
 		this.frameCounter++;
 	}
 }
