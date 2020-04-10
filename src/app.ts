@@ -7,6 +7,7 @@ import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 
 //import colorsys from 'colorsys';
 import SoundHand from './hand'
+import { Vector3 } from '@microsoft/mixed-reality-extension-sdk';
 
 /**
  * The main class of this app. All the logic goes here.
@@ -48,8 +49,7 @@ export default class HelloWorld {
 				attachment: {
 					attachPoint: 'right-hand',
 					userId: user.id
-				},
-				//subscriptions: ['transform']
+				}
 			}
 		});
 		if (rHand) {
@@ -68,8 +68,7 @@ export default class HelloWorld {
 				attachment: {
 					attachPoint: 'left-hand',
 					userId: user.id
-				},
-				//subscriptions: ['transform']
+				}
 			}
 		});
 
@@ -104,17 +103,18 @@ export default class HelloWorld {
 		}
 	}
 
-	/*
+	//TODO: rewrite this to compute all distances then sort. 
 	private findClosestHand(handName: string, handMap: Map<string, MRE.Actor>) {
 		let closestDist = Infinity;
 		let closestActor: MRE.Actor = null;
-		let closestIndex=-1;
-		let index=0;
+		let closestIndex = -1;
+		let index = 0;
+		let allDists: Map<number, MRE.Actor>;
 
-		MRE.log.info("app","Trying to find closest " + handName);
+		MRE.log.info("app", "Trying to find closest " + handName);
 		for (let hand of handMap.values()) {
-			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position);
-			MRE.log.info("app","  examining user: " + index + " computed distance: " + hDist);
+			const hDist = this.rightSoundHand.computeFlatDistance(hand.transform.app.position, new Vector3(0, 0, 0));
+			MRE.log.info("app", "  examining user: " + index + " computed distance: " + hDist);
 			if (hDist < closestDist) {
 				closestDist = hDist;
 				closestActor = hand;
@@ -122,10 +122,10 @@ export default class HelloWorld {
 			}
 			index++;
 		}
-		MRE.log.info("app","  closest hand is user: " + closestIndex);		
+		MRE.log.info("app", "  closest hand is user: " + closestIndex);
 
 		return closestActor;
-	}*/
+	}
 
 	private loadSound(filename: string) {
 		MRE.log.info("app", "trying to load filename: " + filename);
@@ -152,18 +152,10 @@ export default class HelloWorld {
 		this.leftSoundHand.playSound(this.ourSounds[0]);
 		this.leftSoundHand.playSound(this.ourSounds[1]);
 
-		/*const circle = this.assets.createCylinderMesh('circle', 1.0, 0.01, 'y', 16);
-		const ourPole = MRE.Actor.Create(this.context, {
-			actor: {
-				name: 'the pole',
-				appearance: { meshId: circle.id }
-			}
-		});*/
-
 		setInterval(() => {
 			if (this.allRightHands.size > 1) {
 				const hands = Array.from(this.allRightHands.values());
-				this.rightSoundHand.updateSound(hands[0].transform.app.position,
+				this.rightSoundHand.updateSound("righthand",hands[0].transform.app.position,
 					hands[1].transform.app.position);
 			}
 			/*if (this.ourLeftHand) {

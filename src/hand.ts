@@ -51,7 +51,6 @@ export default class SoundHand {
 		return (tempPos.subtract(tempPos2)).length();
 	}
 
-
 	public playSound(theSound: MRE.Sound) {
 		const soundInstance: MRE.MediaInstance = this.soundActor.startSound(theSound.id, {
 			doppler: 0,
@@ -73,37 +72,25 @@ export default class SoundHand {
 		return incoming;
 	}
 
-	private generateKeyframes(duration: number, endPos: MRE.Vector3): MRE.AnimationKeyframe[] {
-		return [{
-			time: 0 * duration,
-			value: { transform: { local: { position: new MRE.Vector3(0, 0, 0) } } }
-		}, {
-			time: 0.25 * duration,
-			value: { transform: { local: { position: endPos.multiplyByFloats(0.25, 0.25, 0.25) } } }
-		}, {
-			time: 0.5 * duration,
-			value: { transform: { local: { position: endPos.multiplyByFloats(0.5, 0.5, 0.5) } } }
-		}, {
-			time: 0.75 * duration,
-			value: { transform: { local: { position: endPos.multiplyByFloats(0.75, 0.75, 0.75) } } }
-		}];
-	}
-	public updateSound(handPos: MRE.Vector3,handPos2: MRE.Vector3) {
+	public updateSound(handName: string, handPos: MRE.Vector3,handPos2: MRE.Vector3) {
 		const flatDist: number = this.computeFlatDistance(handPos,handPos2);
 		const distClamped: number = this.clampVal(flatDist,0.0,2.0);
 
 		const ourPitch = (distClamped*0.5) * -30.0;
 		let ourVol = 1.0;
-
-		//log.info("app", this.handName);
-		//log.info("app", "     dist: " + ourDist);
-		//log.info("app", "     height: " + ourHeight);
-		//log.info("app", "     pitch: " + ourPitch);
-		//log.info("app", "     vol: " + ourVol);
-
+		
 		if (flatDist > 2.0) {
 			ourVol = 0.0;
 		}
+
+		//MRE.log.info("app", this.handName);
+		//MRE.log.info("app", "     handpos1: " + handPos);
+		//MRE.log.info("app", "     handpos2: " + handPos2);
+		//MRE.log.info("app", "     dist: " + flatDist);
+		//MRE.log.info("app", "     height: " + ourHeight);
+		//MRE.log.info("app", "     pitch: " + ourPitch);
+		//MRE.log.info("app", "     vol: " + ourVol);
+
 
 		this.playingSounds[1].setState(
 			{
@@ -117,18 +104,14 @@ export default class SoundHand {
 				this.cubeTarget = handPos2;
 				this.currentCube= this.visCubes.shift();
 				this.currentCube.transform.local.position=handPos;	
-				//this.currentCube.appearance.material.color=
-				//	new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);			
+				this.currentCube.appearance.material.color=	new MRE.Color4(1.0, 0.0, 0.0, 1.0);			
 				this.visCubes.push(this.currentCube); //add back to the end of the queue
 
 				this.cubeTarget2 = handPos;
 				this.currentCube2= this.visCubes.shift();
 				this.currentCube2.transform.local.position=handPos2;	
-				//this.currentCube.appearance.material.color=
-				//  new MRE.Color4(ourHeight, 1.0-ourHeight, 0.0, 1.0);			
+				this.currentCube2.appearance.material.color=	new MRE.Color4(0.0, 1.0, 0.0, 1.0);					
 				this.visCubes.push(this.currentCube2); //add back to the end of the queue
-
-
 			}
 		}
 		if ((this.frameCounter - 1) % 3 === 0) {
